@@ -34,7 +34,14 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    reservations: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Reservation'
+      }
+    ]
   },
+  
   { timestamps: true }
 );
 
