@@ -3,26 +3,21 @@ import bcrypt from "bcryptjs";
 import { createError } from "../utils/error.js";
 import jwt from "jsonwebtoken";
 
-
-
 import multer from "multer";
 
+let filename = "";
 
-let filename='';
+const mystorage = multer.diskStorage({
+  destination: "./uploads",
+  filename: (req, file, redirect) => {
+    let date = Date.now();
+    let f1 = date + "." + file.mimetype.split("/")[1];
+    redirect(null, f1);
+    filename = f1;
+  },
+});
 
-const mystorage=multer.diskStorage({
-    destination: './uploads',
-    filename:(req,file,redirect)=>{
-        let date=Date.now();
-        let f1=date+'.'+file.mimetype.split('/')[1];
-        redirect(null,f1);
-        filename=f1;
-    }
-})
-
-const upload=multer({storage:mystorage})
-
-
+const upload = multer({ storage: mystorage });
 
 export const register = async (req, res, next) => {
   try {
@@ -34,10 +29,9 @@ export const register = async (req, res, next) => {
       password: hash,
     });
 
-    
-    await newUser.save()
+    await newUser.save();
     await sendWelcomeEmail(req.body.email);
-    
+
     res.status(200).send("User has been created.");
   } catch (err) {
     next(err);
@@ -45,7 +39,7 @@ export const register = async (req, res, next) => {
 };
 export const login = async (req, res, next) => {
   try {
-    const user = await User.findOne({ username: req.body.username });
+    const user = await User.findOne({ email: req.body.email });
     if (!user) return next(createError(404, "User not found!"));
 
     const isPasswordCorrect = await bcrypt.compare(
@@ -60,9 +54,6 @@ export const login = async (req, res, next) => {
       process.env.JWT
     );
 
-  
-
-
     const { password, isAdmin, ...otherDetails } = user._doc;
     res
       .cookie("access_token", token, {
@@ -74,8 +65,6 @@ export const login = async (req, res, next) => {
     next(err);
   }
 };
-
-
 
 const sendWelcomeEmail = async (email) => {
   try {
