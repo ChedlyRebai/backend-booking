@@ -13,6 +13,7 @@ export const updateUser = async (req,res,next)=>{
     next(err);
   }
 }
+
 export const deleteUser = async (req,res,next)=>{
   try {
     await User.findByIdAndDelete(req.params.id);

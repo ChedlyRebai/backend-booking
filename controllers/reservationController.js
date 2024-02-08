@@ -16,6 +16,7 @@ export const createReservation = async (req, res, next) => {
       checkOutDate,
       totalPrice,
     });
+
     const savedReservation = await newReservation.save();
 
     // Update user's reservation list

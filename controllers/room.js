@@ -35,29 +35,140 @@ export const updateRoom = async (req, res, next) => {
   }
 };
 
-
 export const updateRoomAvailability = async (req, res, next) => {
+  try {
+    const roomId = req.params.id;
+    const { dates, userId, checkInDate, checkOutDate } = req.body;
+
+    console.log(dates);
+    const roomInReservation = await reservation.findOne({
+      room: req.params.id,
+      $or: [
+        {
+          checkInDate: { $lt: checkOutDate },
+          checkOutDate: { $gt: checkInDate },
+        },
+        { checkInDate: { $gte: checkInDate, $lt: checkOutDate } },
+      ],
+    });
+
+    if (roomInReservation) {
+      console.log("Reservation found for the specified date range");
+      console.log(roomInReservation);
+      return res
+        .status(400)
+        .json("Room is not available for the specified dates.");
+    } else {
+      console.log("Reservation not found for the specified date range");
+      const newReservation = new reservation({
+        user: userId,
+        room: roomId,
+        checkInDate,
+        checkOutDate,
+        totalPrice: calculateTotalPrice(checkInDate, checkOutDate), // Implement your own logic to calculate total price
+      });
+
+      await newReservation.save();
+    }
+
+    await Room.updateOne(
+      { "roomNumbers._id": req.params.id },
+      {
+        $push: {
+          "roomNumbers.$.unavailableDates": req.body.dates,
+        },
+      }
+    );
+    res.status(200).json("Room status has been updated.");
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const pdateRoomAvailability = async (req, res, next) => {
+  try {
+    const roomId = req.params.id;
+    const { userId, checkInDate, checkOutDate } = req.body;
+
+    // Find the room by ID
+    const room = await Room.findById(roomId);
+
+    if (!room) {
+      return res.status(400).json("Room Not found");
+    }
+
+    // Check if there is any reservation overlapping with the specified date range
+    const roomInReservation = await reservation.findOne({
+      room: roomId,
+      $or: [
+        {
+          checkInDate: { $lt: checkOutDate },
+          checkOutDate: { $gt: checkInDate },
+        },
+        { checkInDate: { $gte: checkInDate, $lt: checkOutDate } },
+      ],
+    });
+
+    // If room is available, create a new reservation
+    const newReservation = new reservation({
+      user: userId,
+      room: roomId,
+      checkInDate,
+      checkOutDate,
+      totalPrice: calculateTotalPrice(checkInDate, checkOutDate), // Implement your own logic to calculate total price
+    });
+
+    if (roomInReservation) {
+      console.log("Reservation found for the specified date range");
+      return res
+        .status(400)
+        .json("Room is not available for the specified dates.");
+    }
+
+    await newReservation.save();
+    console.log("Reservation created:", newReservation);
+
+    // Update room's unavailable dates
+    await Room.updateOne(
+      { "roomNumbers._id": req.params.id },
+      {
+        $push: {
+          "roomNumbers.$.unavailableDates": req.body.dates,
+        },
+      }
+    );
+
+    res.status(200).json("Room status has been updated.");
+    console.log("Room status has been updated:", updateResult);
+    return res.status(200).json("Room status has been updated.");
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateRoomAvailabilit = async (req, res, next) => {
   try {
     const roomId = req.params.id;
     const { userId, checkInDate, checkOutDate } = req.body;
     const room = await Room.findById(roomId);
 
-    if(!room){
+    if (!room) {
       res.status(400).json("Room Not found");
     }
 
     const requestedDates = getDatesBetween(checkInDate, checkOutDate);
-    const isAvailable = requestedDates.every(date =>
-      room.roomNumbers.every(roomNumber =>
-        roomNumber.unavailableDates.every(unavailableDate =>
-          !datesAreEqual(unavailableDate, date)
+    const isAvailable = requestedDates.every((date) =>
+      room.roomNumbers.every((roomNumber) =>
+        roomNumber.unavailableDates.every(
+          (unavailableDate) => !datesAreEqual(unavailableDate, date)
         )
       )
     );
-   
-    
+
     if (!isAvailable) {
-      return res.status(400).json("Room is not available for the specified dates.");
+      return res
+        .status(400)
+        .json("Room is not available for the specified dates.");
     }
 
     const newReservation = new reservation({
@@ -65,11 +176,11 @@ export const updateRoomAvailability = async (req, res, next) => {
       room: roomId,
       checkInDate,
       checkOutDate,
-      totalPrice: calculateTotalPrice(checkInDate, checkOutDate) // Implement your own logic to calculate total price
+      totalPrice: calculateTotalPrice(checkInDate, checkOutDate), // Implement your own logic to calculate total price
     });
 
-    await newReservation.save().then((data)=>{
-      console.log(data)
+    await newReservation.save().then((data) => {
+      console.log(data);
     });
 
     // Update room's unavailable dates
@@ -77,16 +188,15 @@ export const updateRoomAvailability = async (req, res, next) => {
       { _id: roomId },
       {
         $push: {
-          "roomNumbers.$[elem].unavailableDates": { $each: requestedDates }
-        }
+          "roomNumbers.$[elem].unavailableDates": { $each: requestedDates },
+        },
       },
 
       {
-        arrayFilters: [{ "elem.number": { $exists: true } }]
+        arrayFilters: [{ "elem.number": { $exists: true } }],
       }
-    ).then((data)=>console.log(data));
+    ).then((data) => console.log(data));
 
-    console.log(updateRoom)
     res.status(200).json("Room status has been updated.");
   } catch (err) {
     next(err);
@@ -110,7 +220,6 @@ export const deleteRoom = async (req, res, next) => {
   }
 };
 
-
 export const getRoom = async (req, res, next) => {
   try {
     const room = await Room.findById(req.params.id);
@@ -129,7 +238,6 @@ export const getRooms = async (req, res, next) => {
   }
 };
 
-
 function getDatesBetween(startDate, endDate) {
   const dates = [];
   let currentDate = new Date(startDate);
@@ -141,7 +249,6 @@ function getDatesBetween(startDate, endDate) {
   }
   return dates;
 }
-
 
 function calculateTotalPrice(checkInDate, checkOutDate) {
   // Calculate the number of nights between check-in and check-out dates
@@ -156,4 +263,3 @@ function calculateTotalPrice(checkInDate, checkOutDate) {
 
   return totalPrice;
 }
-
