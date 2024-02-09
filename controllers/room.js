@@ -38,9 +38,27 @@ export const updateRoom = async (req, res, next) => {
 export const updateRoomAvailability = async (req, res, next) => {
   try {
     const roomId = req.params.id;
-    const { dates, userId, checkInDate, checkOutDate } = req.body;
+    const {
+      dates,
+      daysDifference,
+      peopleNumber,
+      userId,
+      checkInDate,
+      checkOutDate,
+    } = await req.body;
+    const room = await Room.findOne({ "roomNumbers._id": roomId });
 
-    console.log(dates);
+    const total = room.price * daysDifference * peopleNumber;
+
+    console.log(`${daysDifference} daysDifference`);
+    console.log(`${total} total`);
+    console.log(`${checkInDate} checkInDate`);
+    console.log(`${checkOutDate} checkOutDate`);
+    console.log(`${daysDifference} daysDifference`);
+    console.log(`${room.price} room.price`);
+    console.log(`${peopleNumber} peopleNumber`);
+
+    console.log(total);
     const roomInReservation = await reservation.findOne({
       room: req.params.id,
       $or: [
@@ -63,6 +81,7 @@ export const updateRoomAvailability = async (req, res, next) => {
       const newReservation = new reservation({
         user: userId,
         room: roomId,
+        total: total,
         checkInDate,
         checkOutDate,
         totalPrice: calculateTotalPrice(checkInDate, checkOutDate), // Implement your own logic to calculate total price
@@ -91,7 +110,7 @@ export const pdateRoomAvailability = async (req, res, next) => {
     const { userId, checkInDate, checkOutDate } = req.body;
 
     // Find the room by ID
-    const room = await Room.findById(roomId);
+    const room = await Room.findOne({ "roomNumbers._id": roomId });
 
     if (!room) {
       return res.status(400).json("Room Not found");
