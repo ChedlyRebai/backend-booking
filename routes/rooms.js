@@ -3,6 +3,7 @@ import {
   createRoom,
   deleteRoom,
   getRoom,
+  getRoomByRoomNumber,
   getRooms,
   updateRoom,
   updateRoomAvailability,
@@ -19,6 +20,8 @@ router.put("/:id", verifyAdmin, updateRoom);
 //DELETE
 router.delete("/:id/:hotelid", verifyAdmin, deleteRoom);
 //GET
+
+router.get("/getRoomById", getRoomByRoomNumber);
 
 router.get("/:id", getRoom);
 //GET ALL

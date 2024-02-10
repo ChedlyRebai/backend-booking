@@ -6,7 +6,7 @@ import reservation from "../models/reservation.js";
 export const createRoom = async (req, res, next) => {
   const hotelId = req.params.hotelid;
   const newRoom = new Room(req.body);
-
+  newRoom.hotelId = hotelId;
   try {
     const savedRoom = await newRoom.save();
     try {
@@ -39,6 +39,7 @@ export const updateRoomAvailability = async (req, res, next) => {
   try {
     const roomId = req.params.id;
     const {
+      hotelId,
       dates,
       daysDifference,
       peopleNumber,
@@ -46,8 +47,8 @@ export const updateRoomAvailability = async (req, res, next) => {
       checkInDate,
       checkOutDate,
     } = await req.body;
-    const room = await Room.findOne({ "roomNumbers._id": roomId });
 
+    const room = await Room.findOne({ "roomNumbers._id": roomId });
     const total = room.price * daysDifference * peopleNumber;
 
     console.log(`${daysDifference} daysDifference`);
@@ -83,6 +84,7 @@ export const updateRoomAvailability = async (req, res, next) => {
         room: roomId,
         total: total,
         checkInDate,
+        hotelId,
         checkOutDate,
         totalPrice: calculateTotalPrice(checkInDate, checkOutDate), // Implement your own logic to calculate total price
       });
@@ -101,6 +103,17 @@ export const updateRoomAvailability = async (req, res, next) => {
     res.status(200).json("Room status has been updated.");
   } catch (err) {
     next(err);
+  }
+};
+
+export const getRoomByRoomNumber = async (req, res, next) => {
+  try {
+    const { roomId } = req.body;
+    const room = await Room.findOne({ "roomNumbers._id": roomId });
+    res.status(200).json({ room });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error);
   }
 };
 

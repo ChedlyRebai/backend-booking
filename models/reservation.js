@@ -5,26 +5,30 @@ const ReservationSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      ref: "User",
+      required: true,
     },
     room: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Room',
-      required: true
+      ref: "Room",
+      required: true,
     },
     checkInDate: {
       type: Date,
-      required: true
+      required: true,
     },
     checkOutDate: {
       type: Date,
-      required: true
+      required: true,
     },
     totalPrice: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
+    hotelId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
+    },
   },
   { timestamps: true }
 );
