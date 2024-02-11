@@ -162,6 +162,7 @@ export const getMyReservation = async (req, res, next) => {
     const result = reservations.map((reservation) => ({
       reservation,
       room: {
+        
         title: room.title,
         price: room.price,
         photo: room.photo,
