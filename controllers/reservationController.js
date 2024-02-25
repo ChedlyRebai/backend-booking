@@ -2,13 +2,15 @@
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
 import User from "../models/User.js";
-import { default as Reservation, default as reservation } from "../models/reservation.js";
+import {
+  default as Reservation,
+  default as reservation,
+} from "../models/reservation.js";
 
 export const createReservation = async (req, res, next) => {
   const { userId, roomId, checkInDate, checkOutDate, totalPrice } = req.body;
 
   try {
-    // Create a new reservation
     const newReservation = new Reservation({
       user: userId,
       room: roomId,
@@ -16,9 +18,10 @@ export const createReservation = async (req, res, next) => {
       checkOutDate,
       totalPrice,
     });
-
+    console.log(req.body);
+    console.log("total:", totalPrice);
     const savedReservation = await newReservation.save();
-    // Update user's reservation list
+
     await User.findByIdAndUpdate(userId, {
       $push: { reservations: savedReservation._id },
     });
@@ -34,9 +37,7 @@ export const getReservationById = async (req, res, next) => {
     const { userId } = req.params;
 
     const reservations = await reservation.find({ user: userId });
-    // Extract roomIds from reservations
     const roomIds = reservations.map((item) => item.room);
-    // Use Promise.all to wait for all room queries to complete
 
     const roomPromises = roomIds.map(async (roomId) => {
       return await Room.findOne({ "roomNumbers._id": roomId });
@@ -88,12 +89,9 @@ export const getReservationById = async (req, res, next) => {
   }
 };
 
-
-
-
 export const getAllReservations = async (req, res, next) => {
   try {
-    const reservations = await reservation.find().populate('user');
+    const reservations = await reservation.find().populate("user");
 
     const roomIds = reservations.map((item) => item.room);
     const roomPromises = roomIds.map(async (roomId) => {
@@ -141,9 +139,6 @@ export const getAllReservations = async (req, res, next) => {
   }
 };
 
-
-
-
 export const getMyReservation = async (req, res, next) => {
   try {
     const { userId, roomId } = req.body;
@@ -162,7 +157,6 @@ export const getMyReservation = async (req, res, next) => {
     const result = reservations.map((reservation) => ({
       reservation,
       room: {
-        
         title: room.title,
         price: room.price,
         photo: room.photo,
