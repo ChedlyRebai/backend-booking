@@ -79,14 +79,15 @@ export const updateRoomAvailability = async (req, res, next) => {
         .json("Room is not available for the specified dates.");
     } else {
       console.log("Reservation not found for the specified date range");
+      console.log("total:", total);
       const newReservation = new reservation({
         user: userId,
         room: roomId,
-        total: total,
+        totalPrice: total,
         checkInDate,
         hotelId,
         checkOutDate,
-        totalPrice: calculateTotalPrice(checkInDate, checkOutDate), // Implement your own logic to calculate total price
+        //totalPrice: calculateTotalPrice(checkInDate, checkOutDate),  Implement your own logic to calculate total price
       });
 
       await newReservation.save();
